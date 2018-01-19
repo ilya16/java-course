@@ -22,21 +22,12 @@ public abstract class TextHandler {
     }
 
     /**
-     * Validates the text according to the defined rules.
+     * Validates the text according to the rules defined in Child classes
      * Each class that extends TextHandler should define the rules.
      * @param text  the text to be validated
      * @return      the boolean value of result of the validation process
      */
-    protected abstract boolean isTextValid(String text);
-
-    /**
-     * Validates the text according to the rules defined in Child classes
-     * @param text  the text to be validated
-     * @return      the boolean value of result of the validation process
-     */
-    public boolean validateString(String text) {
-        return isTextValid(text);
-    }
+    public abstract boolean validateString(String text);
 
 
 }

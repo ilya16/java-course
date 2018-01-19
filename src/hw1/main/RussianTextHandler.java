@@ -19,7 +19,7 @@ public class RussianTextHandler extends TextHandler {
      *              <tt>true</tt>, if text is in Russian, <tt>false</tt> otherwise
      */
     @Override
-    protected boolean isTextValid(String text) {
+    public boolean validateString(String text) {
         return !Pattern.compile(NONRUSSIAN_TEXT_PATTERN).matcher(text).matches();
     }
 }
