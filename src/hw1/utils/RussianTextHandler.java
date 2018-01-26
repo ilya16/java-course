@@ -1,4 +1,4 @@
-package hw1.main;
+package hw1.utils;
 
 import java.util.regex.Pattern;
 

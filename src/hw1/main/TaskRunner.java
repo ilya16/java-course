@@ -1,5 +1,9 @@
 package hw1.main;
 
+import hw1.readers.FileTextReader;
+import hw1.readers.TextReader;
+import hw1.utils.TextHandler;
+
 import java.io.*;
 import java.util.Map;
 

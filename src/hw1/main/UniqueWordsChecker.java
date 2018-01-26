@@ -1,5 +1,7 @@
 package hw1.main;
 
+import hw1.utils.TextHandler;
+
 import java.io.File;
 import java.util.Map;
 

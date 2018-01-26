@@ -1,11 +1,11 @@
-package hw1.main;
+package hw1.utils;
 
 /**
  * Provides the interface for processing the text.
  *
  * @author Ilya Borovik
  */
-interface TextHandler {
+public interface TextHandler {
     /**
      * Splits the text into tokens according to the SPLIT_TOKEN_PATTERN
      * Each class that implements TextHandler should define the rules of splitting.
