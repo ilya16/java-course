@@ -1,107 +1,66 @@
 package hw1.main;
 
-import java.io.*;
-import java.util.Map;
-import java.util.Scanner;
+import java.io.BufferedReader;
+import java.io.IOException;
 
 /**
- * Processes the Text File resource.
- * Works in a Thread and synchronizes the monitor object with other Threads.
+ * Provides the core functionality of a Text Reader from any resource.
  *
  * @author Ilya Borovik
  */
-public abstract class TextReader implements Runnable {
+public abstract class TextReader implements ResourceReader, AutoCloseable {
 
-    /** Text Handler that processes the text in the resource */
-    protected TextHandler textHandler;
-
-    /** Collection used to store processed tokens */
-    protected final Map<String, Integer> dictionary;
-
-    /** Monitor that stores the status of the whole job */
-    protected final StatusMonitor monitor;
-
-    /** File Resource */
-    private File file;
+    /** BufferedReader that is used to read the text in the resource */
+    private BufferedReader bufferedReader;
 
     /**
      * Constructor
-     * @param file          the resource
-     * @param textHandler   the text processor object
-     * @param dictionary    the map for storing results
-     * @param monitor       the status monitor of the the whole job
+     *
+     * @param bufferedReader    BufferedReader object
      */
-    public TextReader(File file, TextHandler textHandler, Map<String, Integer> dictionary, StatusMonitor monitor) {
-        this.file = file;
-        this.textHandler = textHandler;
-        this.dictionary = dictionary;
-        this.monitor = monitor;
+    TextReader(BufferedReader bufferedReader) {
+        this.bufferedReader = bufferedReader;
     }
 
     /**
-     * Runs the Thread with TextReader
+     * Reads a line from the text resource using bufferedReader.
+     *
+     * @return  a String containing the contents of the line,
+     *          or null if the end of the stream has been reached
+     *
+     * @throws  IOException if an I/O error occurs
      */
     @Override
-    public void run() {
-        System.out.println(Thread.currentThread().getName() + " started working on the resource \t" +
-                file.getPath());
-        try (Scanner in = new Scanner(file)) {
-
-            Status executionStatus;
-
-            synchronized (monitor) {
-                executionStatus = monitor.getStatus();
-            }
-
-            while (in.hasNextLine() && executionStatus == Status.OK) {
-                String line = in.nextLine();
-
-//                System.out.println(Thread.currentThread().getName() + " is processing the line: " + line);
-
-                if (textHandler.validateString(line)) {
-                    short result = processLine(line);
-                    if (result != 0) {
-                        return;
-                    }
-
-                } else {
-                    System.out.println("Text contains non russian words.");
-
-                    synchronized (monitor) {
-                        monitor.setStatus(Status.FOREIGN_SYMBOL_FOUND);
-                    }
-
-                    return;
-                }
-
-                synchronized (monitor) {
-                    executionStatus = monitor.getStatus();
-                }
-            }
-
-            System.out.println(Thread.currentThread().getName() + " has finished its work");
-
-        } catch (FileNotFoundException e) {
-            System.out.printf("File \"%s\" is not found\n", file.getPath());
-
-            /*
-             * The following lines should be uncommented, if all working Threads should be stopped
-             * if at least one File is not found
-             */
-//            synchronized (monitor) {
-//                monitor.setStatus(Status.FILE_NOT_FOUND);
-//            }
-        }
-
+    public String readLine() throws IOException {
+        return bufferedReader.readLine();
     }
 
     /**
-     * Processes the text line.
-     * Each class that extends TextReader should define the logic of the work with the text.
-     * @param line  the text to be processed
-     * @return      the result code of the operation
-     *              0 in case of the absence of errors,
-     *              and other values in case of their presence
+     * Reads a portion of text of a certain <t>length</t> from the resource using bufferedReader.
+     *
+     * @return  a String containing the contents of the line of size <t>length</t>,
+     *          or null if the end of the stream has been reached
+     *
+     * @throws  IOException if an I/O error occurs
      */
-    abstract short processLine(String line);
+    @Override
+    public String read(int length) throws IOException {
+        char[] buffer = new char[length];
+        int read = bufferedReader.read(buffer, 0, length);
+        String result = String.valueOf(buffer);
+        if (read > 0)
+            return result;
+        else
+            return null;
+    }
+
+    /**
+     * Closes the <t>bufferedReader</t> and all underlying resources
+     *
+     * @throws  Exception if this resource cannot be closed
+     */
+    @Override
+    public void close() throws Exception {
+        bufferedReader.close();
+    }
 }

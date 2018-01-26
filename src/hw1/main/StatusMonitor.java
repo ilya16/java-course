@@ -32,7 +32,7 @@ public class StatusMonitor {
 enum Status {
     OK,
     DUPLICATE_FOUND,
-    FOREIGN_SYMBOL_FOUND,
+    NONVALID_SYMBOL_FOUND,
     FILE_NOT_FOUND,
     EXCEPTION_THROWN
 }

@@ -8,48 +8,64 @@ import java.util.Map;
  *
  * @author Ilya Borovik
  */
-public class UniqueWordsChecker extends TextReader {
+public class UniqueWordsChecker extends TaskRunner {
 
-    /** Constructor */
-    public UniqueWordsChecker(File file, TextHandler textHandler, Map<String, Integer> dictionary,
-                              StatusMonitor monitor) {
+    /**
+     * Constructor
+     *
+     * @param file          the resource
+     * @param textHandler   the text processor object
+     * @param dictionary    the map for storing results
+     * @param monitor       the status monitor of the the whole job
+     */
+    public UniqueWordsChecker(File file, TextHandler textHandler,
+                              Map<String, Integer> dictionary, StatusMonitor monitor) {
         super(file, textHandler, dictionary, monitor);
     }
 
     /**
-     * Processes the text line and checks an absenceof duplicate words in it.
-     * @param line  the text to be processed
+     * Constructor
+     *
+     * @param path          the path of the resource
+     * @param textHandler   the text processor object
+     * @param dictionary    the map for storing results
+     * @param monitor       the status monitor of the the whole job
+     */
+    public UniqueWordsChecker(String path, TextHandler textHandler,
+                              Map<String, Integer> dictionary, StatusMonitor monitor) {
+        super(new File(path),  textHandler, dictionary, monitor);
+    }
+
+    /**
+     * Processes the text line and checks an absence of duplicate words in it.
+     *
+     * @param text  the text to be processed
+     *
      * @return      the result code of the operation
      *              0 in case of the absence of errors,
      *              and other values in case of their presence
      */
     @Override
-    short processLine(String line) {
-        String[] words = textHandler.splitTextIntoTokens(line);
+    int processText(String text) {
+        String[] words = textHandler.splitTextIntoTokens(text);
         for (String word : words) {
             if (!word.isEmpty()) {
 
                 /*
-                 * Trade-Off:
-                 * This section of code may stop other threads earlier if stopping condition
-                 * (duplicates or illegal symbols) is met,
-                 * but decreases performance in case of errorless input,
-                 * because of monitor captures and checks on each word.
-                 * In my opinion, not using this code is more preferable.
+                 * synchronized block is not needed here, because
+                 * it's normal for a Thread to process a few words
+                 * and to read an old value of monitor status in
+                 * few iterations, when another Thread has found an error.
                  */
-//                Status executionStatus;
-//                synchronized (monitor) {
-//                    executionStatus = monitor.getStatus();
-//                }
-//                if (executionStatus != Status.OK) {
-//                    return -1;
-//                }
+                if (monitor.getStatus() != Status.OK) {
+                    return -1;
+                }
 
                 Integer result = dictionary.put(word.toLowerCase(), 1);
 
                 if (result != null) {
-                    System.out.printf(Thread.currentThread().getName() +
-                            "\tError! Repetition of \"%s\" is found!!\n", word);
+                    System.out.printf("%s\tError! Repetition of \"%s\" is found!\n",
+                            Thread.currentThread().getName(), word);
 
                     synchronized (monitor) {
                         monitor.setStatus(Status.DUPLICATE_FOUND);
