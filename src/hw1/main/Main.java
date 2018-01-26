@@ -3,9 +3,7 @@ package hw1.main;
 import hw1.utils.RussianTextHandler;
 import hw1.utils.TextHandler;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -32,10 +30,21 @@ public class Main {
 
             /* All the necessary objects used in the work */
             List<Thread> threads = new ArrayList<>();
-            Map<String, Integer> dictionary = new ConcurrentHashMap<>();
             TextHandler textHandler = new RussianTextHandler();
             StatusMonitor monitor = new StatusMonitor();
+            Map<String, Integer> dictionary = new ConcurrentHashMap<>();
 
+            /*
+             * synchronizedMap will work without race conditions for this task
+             * (put() is the only operation used)
+             */
+            // Map<String, Integer> dictionary = Collections.synchronizedMap(new HashMap<>());
+
+            /*
+             * for an ordinary HashMap a mutex Object and synchronized block should be added
+             * around put() operation
+             */
+            // Map<String, Integer> dictionary = new HashMap<>();
 
             System.out.println("Starting the TextReader Threads");
             for (String path : args) {
