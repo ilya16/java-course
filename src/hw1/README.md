@@ -5,7 +5,9 @@ checks uniqueness of each word. Each resource should be processes in a separate 
 Text contains only Cyrillic symbols and numbers. All errors in the text should be correctly processed.
 
 ## Source Code
-All source code is located in the `main` directory.
+The source code related to the threads and the app itself is located in the `main` directory. 
+Package `readers` contains implementations of resource readers.
+Package `utils` contains tools for working with text. 
 
 Directory `data` contains some test text files.
 
