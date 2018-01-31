@@ -35,12 +35,6 @@ public class Client {
             return;
         }
 
-        try {
-            System.out.println(new ObjectInputStream(socket.getInputStream()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         try (ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
              ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream())) {
 
@@ -54,8 +48,16 @@ public class Client {
 
             System.out.println("Redirecting you to the chat...");
 
-            Thread sender = new Thread(new MessageSender(outputStream, chatID, user));
-            Thread receiver = new Thread(new MessageReceiver(inputStream));
+            StatusMonitor statusMonitor = new StatusMonitor();
+            MessageSender messageSender = new MessageSender(outputStream, chatID, user, statusMonitor);
+            MessageReceiver messageReceiver = new MessageReceiver(inputStream, statusMonitor);
+
+            /* part of the settings task */
+            messageSender.setSettings(new Settings(inputStream, outputStream, user));
+
+            Thread sender = new Thread(messageSender);
+            Thread receiver = new Thread(messageReceiver);
+
             System.out.printf("======== Chat %d ========\n", chatID);
             System.out.println("> type \\settings to change your registration information\n" +
                     "> type \\exit to close the application");
@@ -66,9 +68,8 @@ public class Client {
             sender.join();
             receiver.join();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("An error occurred while communication with Server. Connection is lost");
         } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 

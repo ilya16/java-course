@@ -93,8 +93,7 @@ public class Chat implements Serializable {
      * @param outputStream
      */
     public void sendMessage(Message message, ObjectOutputStream outputStream) {
-        // TODO: way of handling disconnections
-//        ArrayList<ObjectOutputStream> closedStreams = new ArrayList<>();
+        ArrayList<ObjectOutputStream> closedStreams = new ArrayList<>();
         for (ObjectOutputStream oos : outputStreams) {
             if (oos != outputStream) {
                 try {
@@ -102,10 +101,10 @@ public class Chat implements Serializable {
                     oos.flush();
                 } catch (IOException e) {
                     // Socket was closed for that stream
-//                    closedStreams.add(oos);
+                    closedStreams.add(oos);
                 }
             }
         }
-//        outputStreams.removeAll(closedStreams);
+        outputStreams.removeAll(closedStreams);
     }
 }

@@ -16,13 +16,18 @@ public class MessageReceiver implements Receiver, Runnable {
     /** Stream through which messages are received */
     private ObjectInputStream inputStream;
 
+    /** Lock used during the interaction with Settings module */
+    private final StatusMonitor monitor;
+
     /**
      * Constructor
      *
-     * @param inputStream  stream through which messages are received
+     * @param inputStream   stream through which messages are received
+     * @param monitor       status monitor
      */
-    MessageReceiver(ObjectInputStream inputStream) {
+    MessageReceiver(ObjectInputStream inputStream, StatusMonitor monitor) {
         this.inputStream = inputStream;
+        this.monitor = monitor;
     }
 
     /**
@@ -44,15 +49,29 @@ public class MessageReceiver implements Receiver, Runnable {
     public void run() {
         Message message;
 
+        Status currentStatus;
+        synchronized (monitor) {
+            currentStatus = monitor.getStatus();
+        }
         while (true) {
             try {
-                message = (Message)receive(inputStream);
+                if (currentStatus == Status.SETTINGS_ON) {
+                    synchronized (monitor) {
+                        currentStatus = monitor.getStatus();
+                    }
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                    }
+                } else {
+                    message = (Message) receive(inputStream);
 
-                if ("\\exit".equals(message.getText())) {
-                    return;
+                    if ("\\exit".equals(message.getText())) {
+                        return;
+                    }
+
+                    System.out.println(message);
                 }
-
-                System.out.println(message);
 
             } catch (EOFException e) {
                 System.out.println("Connection with the Server is lost.");

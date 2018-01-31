@@ -7,6 +7,7 @@ import hw2.chat.User;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -44,10 +45,8 @@ public class Connection implements Runnable {
     @Override
     public void run() {
         String username = "";
-        System.out.println("hi");
         try (ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
              ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream())) {
-            System.out.println("hi2");
 
             /* authorizing user */
             User user = authorizeUser(inputStream, outputStream);
@@ -70,7 +69,8 @@ public class Connection implements Runnable {
             System.out.printf("%s\tConnection with the user %s was lost. Socket is closed\n",
                     Thread.currentThread().getName(), username);
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            System.out.printf("%s\tAn error occurred while object was read. Class was not found in the packages\n",
+                    Thread.currentThread().getName());
         }
     }
 
@@ -151,7 +151,7 @@ public class Connection implements Runnable {
      * @param outputStream  ObjectOutputStream object
      * @param user          User object
      *
-     * @return              success of the sent
+     * @return              success of the dispatch
      *
      * @throws IOException  if an error occurred while communicating through the socket
      */
@@ -214,6 +214,7 @@ public class Connection implements Runnable {
         Message message;
         while (true) {
             message = (Message)inputStream.readObject();
+            message.setDate(new Date());
 
             if ("\\exit".equals(message.getText())) {
                 outputStream.writeObject(message);
@@ -224,7 +225,9 @@ public class Connection implements Runnable {
                         Thread.currentThread().getName(), user.getUsername(), chat.getChatID());
                 return;
             } else if ("\\settings".equals(message.getText())) {
-
+                System.out.printf("%s\tUser %s has went to the Settings Module\n",
+                        Thread.currentThread().getName(), user.getUsername());
+                updateUserInfo(inputStream, outputStream, user);
             } else {
                 System.out.printf("%s\tMessage from %s: %s\n",
                         Thread.currentThread().getName(), message.getSender().getUsername(), message.getText());
@@ -235,5 +238,72 @@ public class Connection implements Runnable {
                         Thread.currentThread().getName());
             }
         }
+    }
+
+    /**
+     * Processes the updates of user information from the Client application.
+     *
+     * @param inputStream   ObjectInputStream object
+     * @param outputStream  ObjectOutputStream object
+     * @param user          User object
+     *
+     * @return              success of the update
+     *
+     * @throws IOException  if an error occurred while communicating through the socket
+     */
+    private boolean updateUserInfo(ObjectInputStream inputStream,
+                                ObjectOutputStream outputStream, User user) throws IOException {
+        boolean updateSuccess = false;
+        String userAction;
+        String username = user.getUsername();
+        String newUsername = "";
+
+        System.out.printf("%s\tGetting setting action\n",
+                Thread.currentThread().getName());
+
+        while (!updateSuccess) {
+            userAction = inputStream.readUTF();
+            System.out.printf("%s\tGot user action: %s\n",
+                    Thread.currentThread().getName(), userAction);
+
+            if ("\\username".equals(userAction)) {
+                System.out.printf("%s\tChange of the username of \"%s\" is happening\n",
+                        Thread.currentThread().getName(), username);
+
+                while (!updateSuccess) {
+                    newUsername = inputStream.readUTF();
+
+                    updateSuccess = !username.equals(newUsername)
+                            && !registrationModule.usernameExists(newUsername);
+
+                    outputStream.writeBoolean(updateSuccess);
+                    outputStream.flush();
+
+                    if (!updateSuccess) {
+                        System.out.printf("%s\tError: username \"%s\" is already taken\n",
+                                Thread.currentThread().getName(), newUsername);
+                    }
+                }
+
+                registrationModule.updateUsername(username, newUsername);
+                System.out.printf("%s\tUsername was successfully changed to \"%s\"\n",
+                        Thread.currentThread().getName(), newUsername);
+
+            } else if ("\\password".equals(userAction)) {
+                System.out.printf("%s\tChange of the password of \"%s\" is happening\n",
+                        Thread.currentThread().getName(), username);
+
+                String newPassword = inputStream.readUTF();
+
+                registrationModule.updatePassword(username, newPassword);
+
+                outputStream.writeBoolean(true);
+                outputStream.flush();
+
+                System.out.printf("%s\tPassword of a user %s was successfully updated\n",
+                        Thread.currentThread().getName(), username);
+            }
+        }
+        return true;
     }
 }

@@ -59,11 +59,9 @@ public class ChatSystem implements Runnable {
     public void run() {
         System.out.println("Chat system was successfully started");
 
-        ArrayList<Socket> sockets = new ArrayList<>();
         while (true) {
             try {
                 Socket socket = serverSocket.accept();
-                socket.close();
                 System.out.println("New Connection Accepted!");
                 Connection connection = new Connection(socket, chats, registrationModule);
                 connections.add(connection);
@@ -72,7 +70,7 @@ public class ChatSystem implements Runnable {
                 connectionThread.setName("Connection-" + connections.size());
                 connectionThread.start();
             } catch (IOException e) {
-                System.out.println(e.getMessage());
+                System.out.println("An error occurred while accepting the socket connection");
             }
         }
     }

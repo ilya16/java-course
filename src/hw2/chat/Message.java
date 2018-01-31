@@ -1,7 +1,7 @@
 package hw2.chat;
 
 import java.io.Serializable;
-import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -18,7 +18,7 @@ public class Message implements Serializable {
     private Date date;
 
     /** DateFormat instance */
-    private final DateFormat dateFormat = DateFormat.getDateInstance();
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
 
     /**
      * Constructor
@@ -50,6 +50,10 @@ public class Message implements Serializable {
         return date;
     }
 
+    public void setDate(Date date) {
+        this.date = date;
+    }
+
     /**
      * Returns a pretty String representation of the Message
      *
@@ -57,7 +61,6 @@ public class Message implements Serializable {
      */
     @Override
     public String toString() {
-        // TODO: fix date
         return String.format("%s\t%s:\t%s",
                 dateFormat.format(date), sender.getUsername(), text);
     }

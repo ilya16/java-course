@@ -115,6 +115,37 @@ public class RegistrationModule {
     }
 
     /**
+     * Updates the username of the user.
+     *
+     * @param username      old username
+     * @param newUsername   new username
+     */
+    public void updateUsername(String username, String newUsername) {
+        synchronized (lock) {
+            User user = users.get(username);
+            users.remove(username);
+            user.setUsername(newUsername);
+            users.put(newUsername, user);
+            save();
+        }
+    }
+
+    /**
+     * Updates the password of the user.
+     *
+     * @param username      user login
+     * @param newPassword   new password
+     */
+    public void updatePassword(String username, String newPassword) {
+       synchronized (lock) {
+           User user = users.get(username);
+           user.setPassword(newPassword);
+           users.put(username, user);
+           save();
+       }
+    }
+
+    /**
      * Dumps Collection of users to the disk.
      *
      * @param users Collection of users
