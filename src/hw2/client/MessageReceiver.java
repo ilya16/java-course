@@ -1,32 +1,48 @@
-package hw2.main.client;
+package hw2.client;
 
-import hw2.main.chat.Message;
+import hw2.chat.Message;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.text.DateFormat;
 
+/**
+ * Receives messages through the socket.
+ *
+ * @author Ilya Borovik
+ */
 public class MessageReceiver implements Receiver, Runnable {
-    Socket socket;
-    ObjectInputStream inputStream;
 
-    public MessageReceiver(Socket socket, ObjectInputStream inputStream) {
-        this.socket = socket;
+    /** Stream through which messages are received */
+    private ObjectInputStream inputStream;
+
+    /**
+     * Constructor
+     *
+     * @param inputStream  stream through which messages are received
+     */
+    MessageReceiver(ObjectInputStream inputStream) {
         this.inputStream = inputStream;
     }
 
+    /**
+     * Receives the object through the ObjectInputStream.
+     *
+     * @param inputStream   stream through which object is received
+     *
+     * @throws IOException  if an error occurs while receiving the object
+     */
     @Override
     public Object receive(ObjectInputStream inputStream) throws IOException, ClassNotFoundException {
         return inputStream.readObject();
     }
 
+    /**
+     * Starts the MessageReceiver.
+     */
     @Override
     public void run() {
         Message message;
-        DateFormat dateFormat = DateFormat.getDateInstance();
 
         while (true) {
             try {
@@ -36,8 +52,7 @@ public class MessageReceiver implements Receiver, Runnable {
                     return;
                 }
 
-                System.out.printf("%s\t%s:\t%s\n", dateFormat.format(message.getDate()),
-                        message.getSender().getUsername(), message.getText());
+                System.out.println(message);
 
             } catch (EOFException e) {
                 System.out.println("Connection with the Server is lost.");

@@ -1,14 +1,23 @@
-package hw2.main.client;
+package hw2.client;
 
-import hw2.main.chat.Chat;
-import hw2.main.chat.User;
+import hw2.chat.User;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+/**
+ * Implements the logic of the Client application.
+ *
+ * @author Ilya Borovik
+ */
 public class Client {
+    /**
+     * Starts the Client application.
+     *
+     * @param args array with one element - port number
+     */
     public static void main(String[] args) {
         int portNumber = 9099;
         if (args.length == 0) {
@@ -26,6 +35,12 @@ public class Client {
             return;
         }
 
+        try {
+            System.out.println(new ObjectInputStream(socket.getInputStream()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         try (ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
              ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream())) {
 
@@ -39,9 +54,11 @@ public class Client {
 
             System.out.println("Redirecting you to the chat...");
 
-            Thread sender = new Thread(new MessageSender(socket, chatID, user, outputStream));
-            Thread receiver = new Thread(new MessageReceiver(socket, inputStream));
+            Thread sender = new Thread(new MessageSender(outputStream, chatID, user));
+            Thread receiver = new Thread(new MessageReceiver(inputStream));
             System.out.printf("======== Chat %d ========\n", chatID);
+            System.out.println("> type \\settings to change your registration information\n" +
+                    "> type \\exit to close the application");
 
             sender.start();
             receiver.start();
@@ -53,11 +70,18 @@ public class Client {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-
     }
 
-    private static void authorize(ObjectInputStream inputStream, ObjectOutputStream outputStream) {
+    /**
+     * Authorizes the user in the system.
+     * Includes both registration and authorization
+     *
+     * @param inputStream   ObjectInputStream object
+     * @param outputStream  ObjectOutputStream object
+     *
+     * @throws IOException  if an error occurred while communicating through the socket
+     */
+    private static void authorize(ObjectInputStream inputStream, ObjectOutputStream outputStream) throws IOException {
         Scanner in = new Scanner(System.in);
 
         boolean authorizationSuccess = false;
@@ -78,25 +102,17 @@ public class Client {
                 System.out.println("Registration");
             }
 
-            try {
-                outputStream.writeUTF(userAction);
-                outputStream.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            outputStream.writeUTF(userAction);
+            outputStream.flush();
 
             System.out.print("Username: ");
             username = in.next();
             System.out.print("Password: ");
             password = in.next();
 
-            try {
-                outputStream.writeUTF(username);
-                outputStream.writeUTF(password);
-                outputStream.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            outputStream.writeUTF(username);
+            outputStream.writeUTF(password);
+            outputStream.flush();
 
             if ("\\auth".equals(userAction)) {
                 System.out.println("Authorizing...");
@@ -112,17 +128,14 @@ public class Client {
 
             if (!authorizationSuccess) {
                 /* Error occurred */
-                try {
-                    serverResponse = inputStream.readUTF();
-                    System.out.println(serverResponse);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                serverResponse = inputStream.readUTF();
+                System.out.println(serverResponse);
             }
 
             if (authorizationSuccess && "\\reg".equals(userAction)) {
                 System.out.println("Successfully registered");
                 authorizationSuccess = false;
+                /* next action */
                 userAction = "\\auth";
             } else {
                 userAction = "";
@@ -130,6 +143,16 @@ public class Client {
         }
     }
 
+    /**
+     * Gets information about the user from the Server.
+     *
+     * @param inputStream   ObjectInputStream object
+     * @param outputStream  ObjectOutputStream object
+     *
+     * @return              User object
+     *
+     * @throws IOException  if an error occurred while communicating through the socket
+     */
     private static User getUserInfo(ObjectInputStream inputStream, ObjectOutputStream outputStream) throws IOException {
         /* getting user */
         User user = null;
@@ -151,6 +174,16 @@ public class Client {
         return user;
     }
 
+    /**
+     * Process the user's choice of the chat (room).
+     *
+     * @param inputStream   ObjectInputStream object
+     * @param outputStream  ObjectOutputStream object
+     *
+     * @return              chat identifier
+     *
+     * @throws IOException  if an error occurred while communicating through the socket
+     */
     private static int selectChat(ObjectInputStream inputStream, ObjectOutputStream outputStream) throws IOException {
         /* getting chat */
         int chatID = 1;
@@ -164,8 +197,8 @@ public class Client {
         }
 
         /*
-         * Only one chat is available, hence user always cannot select
-         * For more chat this part of the code should be changed with user prompt
+         * Only one chat is available, hence user cannot select the id.
+         * For more chat this part of the code should be changed with user prompt.
          */
         if (chats != null) {
             chatID = chats.get(0);

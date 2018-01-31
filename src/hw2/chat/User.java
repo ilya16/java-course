@@ -1,23 +1,36 @@
-package hw2.main.chat;
+package hw2.chat;
 
 import java.io.Serializable;
 
+/**
+ * Stores the information about the User:
+ * identifier in the Chat System, username and password.
+ *
+ * @author Ilya Borovik
+ */
 public class User implements Serializable {
-    int userID;
-    String username;
-    String password;
 
-    public User(int userID, String username) {
-        this.userID = userID;
-        this.username = username;
-    }
+    /** User identifier */
+    private int userID;
 
+    /** User information */
+    private String username;
+    private String password;
+
+    /**
+     * Constructor
+     *
+     * @param userID    user identifier
+     * @param username  user login
+     * @param password  user password
+     */
     public User(int userID, String username, String password) {
         this.userID = userID;
         this.username = username;
         this.password = password;
     }
 
+    /** Getters and Setters */
     public int getUserID() {
         return userID;
     }
