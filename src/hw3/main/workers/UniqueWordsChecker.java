@@ -11,6 +11,9 @@ import java.util.Map;
  */
 public class UniqueWordsChecker implements TextProcessor {
 
+    /** Internal parameter of the checker */
+    private int NUMBER_OF_UNIQUE_SYMBOLS = 10;
+
     /** Text Handler that processes the text in the resource */
     private TextHandler textHandler;
 
@@ -52,7 +55,11 @@ public class UniqueWordsChecker implements TextProcessor {
                     return -1;
                 }
 
-                Integer result = dictionary.put(word.toLowerCase(), 1);
+                if (word.length() >= NUMBER_OF_UNIQUE_SYMBOLS) {
+                    word = String.valueOf(word.toLowerCase().substring(0, NUMBER_OF_UNIQUE_SYMBOLS));
+                }
+
+                Integer result = dictionary.put(word, 1);
 
                 if (result != null) {
                     System.out.printf("%s\tError! Repetition of \"%s\" is found!\n",
