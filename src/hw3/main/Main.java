@@ -34,7 +34,7 @@ public class Main {
         System.out.println("Application has started its execution");
 
         String taskName = "UniqueWordsChecker";
-        String libPath = "src/hw3/lib/workers-base.jar";
+        String libPath = "src/hw3/lib/";
         String[] resources = args;
 
         if (args.length > 0) {

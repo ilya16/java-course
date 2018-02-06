@@ -1,5 +1,6 @@
 package hw3.main.loaders;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,18 +42,44 @@ public class CustomLoader extends ClassLoader {
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         try {
-            JarFile jarLib = new JarFile(libPath);
-            JarEntry jarEntry = jarLib.getJarEntry(
-                    name.replace(".", "/") + ".class");
+            JarFile jarLib = null;
+            String[] libFiles = new String[0];
 
-            InputStream libInputStream = jarLib.getInputStream(jarEntry);
-
-            byte[] classBytes = new byte[(int) jarEntry.getSize()];
-            if (libInputStream.read(classBytes) != classBytes.length) {
-                throw new IOException("Could not completely read the file " + libPath);
+            if (libPath.endsWith(".jar")) {
+                jarLib = new JarFile(libPath);
+            } else {
+                File dir = new File(libPath);
+                libFiles = dir.list();
             }
 
-            return defineClass(name, classBytes, 0, classBytes.length);
+            if (libFiles != null) {
+                for (String filepath : libFiles) {
+                    if (filepath.endsWith(".jar")) {
+                        jarLib = new JarFile(libPath + filepath);
+                        break;
+                    }
+                }
+            } else {
+                throw new IOException();
+            }
+
+            if (jarLib != null) {
+                JarEntry jarEntry = jarLib.getJarEntry(
+                        name.replace(".", "/") + ".class");
+
+                InputStream libInputStream = jarLib.getInputStream(jarEntry);
+
+                byte[] classBytes = new byte[(int) jarEntry.getSize()];
+                if (libInputStream.read(classBytes) != classBytes.length) {
+                    throw new IOException("Could not completely read the file " + libPath);
+                }
+
+                System.out.println("\tLoading class from " + jarLib.getName());
+
+                return defineClass(name, classBytes, 0, classBytes.length);
+            }
+
+            throw new IOException();
 
         } catch (FileNotFoundException e) {
             System.out.printf("Jar File %s is not found\n", libPath);
