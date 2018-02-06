@@ -2,63 +2,52 @@ package hw3.main.workers;
 
 import hw3.main.utils.TextHandler;
 
-import java.io.File;
 import java.util.Map;
 
 /**
- * Processes the Text File and checks an absence of duplicate words in it.
+ * Processes the Text and checks for an absence of duplicate words in it.
  *
  * @author Ilya Borovik
  */
-public class UniqueWordsChecker extends TaskRunner {
+public class UniqueWordsChecker implements TextProcessor {
+
+    /** Text Handler that processes the text in the resource */
+    private TextHandler textHandler;
+
+    /** Collection used to store processed tokens */
+    private final Map<String, Integer> dictionary;
+
+    /** Monitor that stores the status of the whole job */
+    private final StatusMonitor monitor;
 
     /**
      * Constructor
      *
-     * @param file          the resource
      * @param textHandler   the text processor object
      * @param dictionary    the map for storing results
      * @param monitor       the status monitor of the the whole job
      */
-    public UniqueWordsChecker(File file, TextHandler textHandler,
-                              Map<String, Integer> dictionary, StatusMonitor monitor) {
-        super(file, textHandler, dictionary, monitor);
+    public UniqueWordsChecker(TextHandler textHandler, Map<String, Integer> dictionary, StatusMonitor monitor) {
+        this.textHandler = textHandler;
+        this.dictionary = dictionary;
+        this.monitor = monitor;
     }
 
     /**
-     * Constructor
-     *
-     * @param path          the path of the resource
-     * @param textHandler   the text processor object
-     * @param dictionary    the map for storing results
-     * @param monitor       the status monitor of the the whole job
-     */
-    public UniqueWordsChecker(String path, TextHandler textHandler,
-                              Map<String, Integer> dictionary, StatusMonitor monitor) {
-        super(new File(path),  textHandler, dictionary, monitor);
-    }
-
-    /**
-     * Processes the text line and checks an absence of duplicate words in it.
+     * Processes the text line and checks for an absence of duplicate words in it.
      *
      * @param text  the text to be processed
      *
      * @return      the result code of the operation
-     *              0 in case of the absence of errors,
+     *              0 in the case of the absence of duplicates,
      *              and other values in case of their presence
      */
     @Override
-    int processText(String text) {
+    public int processText(String text) {
         String[] words = textHandler.splitTextIntoTokens(text);
         for (String word : words) {
             if (!word.isEmpty()) {
 
-                /*
-                 * synchronized block is not needed here, because
-                 * it's normal for a Thread to process a few words
-                 * and to read an old value of monitor status in
-                 * few iterations, when another Thread has found an error.
-                 */
                 if (monitor.getStatus() != Status.OK) {
                     return -1;
                 }

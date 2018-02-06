@@ -5,6 +5,7 @@ import hw3.main.readers.TextReader;
 import hw3.main.utils.TextHandler;
 
 import java.io.*;
+import java.lang.reflect.Proxy;
 import java.util.Map;
 
 /**
@@ -13,29 +14,35 @@ import java.util.Map;
  *
  * @author Ilya Borovik
  */
-public abstract class TaskRunner implements Runnable {
+public class TaskRunner implements Runnable {
 
-    /** Text Handler that processes the text in the resource */
-    protected TextHandler textHandler;
+    /** Name of the task (Class name) */
+    private final String taskName;
+
+    /** Text Handler that validates the text in the resource */
+    private TextHandler textHandler;
 
     /** Collection used to store processed tokens */
-    protected final Map<String, Integer> dictionary;
+    private final Map<String, Integer> dictionary;
 
     /** Monitor that stores the status of the whole job */
-    protected final StatusMonitor monitor;
+    private final StatusMonitor monitor;
 
     /** File Resource */
     private File file;
 
     /**
      * Constructor
+     *
+     * @param taskName      the name of task (TextProcessor class)
      * @param file          the resource
-     * @param textHandler   the text processor object
+     * @param textHandler   the text handler object
      * @param dictionary    the map for storing results
      * @param monitor       the status monitor of the the whole job
      */
-    public TaskRunner(File file, TextHandler textHandler,
+    public TaskRunner(String taskName, File file, TextHandler textHandler,
                       Map<String, Integer> dictionary, StatusMonitor monitor) {
+        this.taskName = taskName;
         this.file = file;
         this.textHandler = textHandler;
         this.dictionary = dictionary;
@@ -44,14 +51,16 @@ public abstract class TaskRunner implements Runnable {
 
     /**
      * Constructor
+     *
+     * @param taskName      the name of task (TextProcessor class)
      * @param path          the path of the resource
-     * @param textHandler   the text processor object
+     * @param textHandler   the text handler object
      * @param dictionary    the map for storing results
      * @param monitor       the status monitor of the the whole job
      */
-    public TaskRunner(String path, TextHandler textHandler,
+    public TaskRunner(String taskName, String path, TextHandler textHandler,
                       Map<String, Integer> dictionary, StatusMonitor monitor) {
-        this(new File(path),  textHandler, dictionary, monitor);
+        this(taskName, new File(path),  textHandler, dictionary, monitor);
     }
 
     /**
@@ -61,6 +70,15 @@ public abstract class TaskRunner implements Runnable {
     public void run() {
         System.out.printf("%s started working on the resource \t%s\n",
                 Thread.currentThread().getName(), file.getPath());
+
+        /* Proxy Object */
+        TextProcessor textProcessor =
+                (TextProcessor) Proxy.newProxyInstance(
+                        TextProcessor.class.getClassLoader(),
+                        new Class[]{TextProcessor.class},
+                        new TextProcessorInvHandler(taskName, textHandler, dictionary, monitor)
+                );
+
         try (TextReader reader = new FileTextReader(new FileReader(file))) {
 
             Status executionStatus;
@@ -72,10 +90,10 @@ public abstract class TaskRunner implements Runnable {
             String text;
 
             while ((text = reader.readLine()) != null && executionStatus == Status.OK) {
-                 // System.out.println(Thread.currentThread().getName() + " is processing the text: " + text);
+                // System.out.println(Thread.currentThread().getName() + " is processing the text: " + text);
 
                 if (textHandler.validateString(text)) {
-                    int result = processText(text);
+                    int result = textProcessor.processText(text);
                     if (result != 0) {
                         return;
                     }
@@ -97,7 +115,7 @@ public abstract class TaskRunner implements Runnable {
             }
         } catch (FileNotFoundException e) {
             System.out.printf("%s\tFile \"%s\" is not found. " +
-                    "Trying to work with other resources if they are present\n",
+                            "Trying to work with other resources if they are present\n",
                     Thread.currentThread().getName(), file.getPath());
 
             /*
@@ -111,22 +129,27 @@ public abstract class TaskRunner implements Runnable {
         } catch (IOException e) {
             System.out.printf("%s\tAn IOException occurred while reading the file \"%s\". %s",
                     Thread.currentThread().getName(), file.getPath(), e.getMessage());
-        } catch (Exception e) {
-            System.out.printf("%s\tAn Exception occurred. Resource cannot be closed. %s",
+
+            synchronized (monitor) {
+                monitor.setStatus(Status.EXCEPTION_THROWN);
+            }
+        } catch (ClassNotFoundException e) {
+            System.out.printf("%s\tClass with TextProcessor is not found at runtime. %s",
                     Thread.currentThread().getName(), e.getMessage());
+
+            synchronized (monitor) {
+                monitor.setStatus(Status.EXCEPTION_THROWN);
+            }
+        } catch (Exception e) {
+            System.out.printf("%s\tAn Exception occurred. Thread is finishing its execution %s\n",
+                    Thread.currentThread().getName(), e.getMessage());
+
+            synchronized (monitor) {
+                monitor.setStatus(Status.EXCEPTION_THROWN);
+            }
         } finally {
             System.out.println(Thread.currentThread().getName() + " has finished its work");
         }
 
     }
-
-    /**
-     * Processes the text line.
-     * Each class that extends FileReader should define the logic of the work with the text.
-     * @param text  the text to be processed
-     * @return      the result code of the operation
-     *              0 in case of the absence of errors,
-     *              and other values in case of their presence
-     */
-    abstract int processText (String text);
 }
