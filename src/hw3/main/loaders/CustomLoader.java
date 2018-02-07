@@ -8,7 +8,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /**
- * Loads compiled classes from a jar file in a specified location.
+ * Loads compiled classes from a jar file
+ * or a directory with jar files in a specified location.
  *
  * @author Ilya Borovik
  */
@@ -48,6 +49,7 @@ public class CustomLoader extends ClassLoader {
             if (libPath.endsWith(".jar")) {
                 jarLib = new JarFile(libPath);
             } else {
+                /* directory was specified */
                 File dir = new File(libPath);
                 libFiles = dir.list();
             }
@@ -55,6 +57,7 @@ public class CustomLoader extends ClassLoader {
             if (libFiles != null) {
                 for (String filepath : libFiles) {
                     if (filepath.endsWith(".jar")) {
+                        /*  selecting the first jar file in the lib directory */
                         jarLib = new JarFile(libPath + filepath);
                         break;
                     }
