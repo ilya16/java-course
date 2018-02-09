@@ -11,10 +11,10 @@ Alternative check: uniqueness of first 10 symbols of a word.
 
 ## Source Code
 The source code related to the threads and the app itself is located in the `main` directory. 
-Package `readers` contains implementations of resource readers.
-Package `utils` contains tools for working with text. 
-Package `workers` contains workers that process the resources.
+* Package `readers` contains implementations of resource readers.
+* Package `utils` contains tools for working with text. 
+* Package `workers` contains workers that process the resources.
 
-Directory `resources` contains some test text files.
+* Directory `resources` contains some test text files.
 
-Directory `lib` contains JAR files with workers.
+* Directory `lib` contains JAR files with workers.

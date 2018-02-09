@@ -6,8 +6,8 @@ Text contains only Cyrillic symbols and numbers. All errors in the text should b
 
 ## Source Code
 The source code related to the threads and the app itself is located in the `main` directory. 
-Package `readers` contains implementations of resource readers.
-Package `utils` contains tools for working with text. 
+* Package `readers` contains implementations of resource readers.
+* Package `utils` contains tools for working with text. 
 
-Directory `data` contains some test text files.
+* Directory `data` contains some test text files.
 
