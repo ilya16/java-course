@@ -7,6 +7,7 @@ import hw3.main.utils.TextHandler;
 import java.io.*;
 import java.lang.reflect.Proxy;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Processes the File resource with the text.
@@ -88,13 +89,14 @@ public class TaskRunner implements Runnable {
             }
 
             String text;
+            Predicate<String> successfulTextProcessing = x -> textProcessor.processText(x) == 0;
 
             while ((text = reader.readLine()) != null && executionStatus == Status.OK) {
                 // System.out.println(Thread.currentThread().getName() + " is processing the text: " + text);
 
                 if (textHandler.validateString(text)) {
-                    int result = textProcessor.processText(text);
-                    if (result != 0) {
+
+                    if (!successfulTextProcessing.test(text)) {
                         return;
                     }
 

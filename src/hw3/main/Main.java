@@ -70,14 +70,7 @@ public class Main {
             thread.start();
         }
 
-        try {
-            for (Thread thread : threads) {
-                thread.join();
-            }
-        } catch (InterruptedException e) {
-            System.out.println("An error occurred. One working thread has interrupted the main app.\n"
-                    + e.getMessage());
-        }
+        threads.forEach(Main::safeThreadJoin);
 
         /* Observing results */
         if (monitor.getStatus() == Status.OK) {
@@ -88,5 +81,14 @@ public class Main {
         }
 
         System.out.printf("Total work time: %d ms\n", System.currentTimeMillis() - startTime);
+    }
+
+    private static void safeThreadJoin(Thread thread) {
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            System.out.println("An error occurred. One working thread has interrupted the main app.\n"
+                    + e.getMessage());
+        }
     }
 }
