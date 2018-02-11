@@ -47,24 +47,26 @@ public class UniqueWordsChecker implements TextProcessor {
     public int processText(String text) {
         String[] words = textHandler.splitTextIntoTokens(text);
 
-        for (String word : Arrays.stream(words).filter(word -> !word.isEmpty()).toArray(String[]::new)) {
-            if (monitor.getStatus() != Status.OK) {
-                return -1;
+
+        String duplicateWord =
+                Arrays.stream(words)
+                .parallel()
+                .filter(word -> !word.isEmpty())
+                .filter(word -> dictionary.putIfAbsent(word.toLowerCase(), 1) != null)
+                .findFirst()
+                .orElse(null);
+
+        if (duplicateWord != null) {
+            System.out.printf("%s\tError! Repetition of \"%s\" is found!\n",
+                    Thread.currentThread().getName(), duplicateWord);
+
+            synchronized (monitor) {
+                monitor.setStatus(Status.DUPLICATE_FOUND);
             }
 
-            Integer result = dictionary.putIfAbsent(word.toLowerCase(), 1);
-
-            if (result != null) {
-                System.out.printf("%s\tError! Repetition of \"%s\" is found!\n",
-                        Thread.currentThread().getName(), word);
-
-                synchronized (monitor) {
-                    monitor.setStatus(Status.DUPLICATE_FOUND);
-                }
-
-                return -1;
-            }
+            return -1;
         }
+
         return 0;
     }
 }
