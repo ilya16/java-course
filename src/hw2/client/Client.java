@@ -1,5 +1,7 @@
 package hw2.client;
 
+import hw2.utils.Status;
+import hw2.utils.StatusMonitor;
 import hw2.chat.User;
 
 import java.io.*;
@@ -48,7 +50,7 @@ public class Client {
 
             System.out.println("Redirecting you to the chat...");
 
-            StatusMonitor statusMonitor = new StatusMonitor();
+            StatusMonitor statusMonitor = new StatusMonitor(Status.OFF);
             MessageSender messageSender = new MessageSender(outputStream, chatID, user, statusMonitor);
             MessageReceiver messageReceiver = new MessageReceiver(inputStream, statusMonitor);
 
@@ -191,9 +193,7 @@ public class Client {
         ArrayList<Integer> chats = null;
         try {
             chats = (ArrayList<Integer>)inputStream.readObject();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
 

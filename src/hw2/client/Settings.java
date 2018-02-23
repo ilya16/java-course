@@ -7,6 +7,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Scanner;
 
+/**
+ * Provides settings functionality to a user.
+ *
+ * @author Ilya Borovik
+ */
 public class Settings implements Runnable {
 
     /** Stream through which messages are sent */

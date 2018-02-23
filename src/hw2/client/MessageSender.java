@@ -1,10 +1,11 @@
 package hw2.client;
 
 import hw2.chat.Message;
+import hw2.utils.Status;
+import hw2.utils.StatusMonitor;
 import hw2.chat.User;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Scanner;
 
@@ -79,7 +80,7 @@ public class MessageSender implements Sender, Runnable {
 
                 if ("\\settings".equals(messageText)) {
                     synchronized (monitor) {
-                        monitor.setStatus(Status.SETTINGS_ON);
+                        monitor.setStatus(Status.ON);
                         Thread settingThread = new Thread(settings);
                         settingThread.start();
                         try {
@@ -87,7 +88,7 @@ public class MessageSender implements Sender, Runnable {
                         } catch (InterruptedException e) {
                             System.out.println("An error occurred while getting to the Settings Module");
                         }
-                        monitor.setStatus(Status.SETTINGS_OFF);
+                        monitor.setStatus(Status.OFF);
                         System.out.printf("======== Chat %d ========\n", chatID);
                     }
                 }

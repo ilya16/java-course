@@ -1,12 +1,16 @@
-package hw2.client;
+package hw2.utils;
 
 /**
- * Stores the status of the running job.
+ * Stores the status of the application.
  */
 public class StatusMonitor {
 
     /** Status of the job */
-    private Status status = Status.SETTINGS_OFF;
+    private Status status;
+
+    public StatusMonitor(Status status) {
+        this.status = status;
+    }
 
     /**
      * Returns the current status.
@@ -23,13 +27,4 @@ public class StatusMonitor {
     public void setStatus(Status status) {
         this.status = status;
     }
-}
-
-
-/**
- * Possible statuses of the running job.
- */
-enum Status {
-    SETTINGS_ON,
-    SETTINGS_OFF
 }

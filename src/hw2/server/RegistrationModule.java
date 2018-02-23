@@ -166,8 +166,6 @@ public class RegistrationModule {
      */
     public Map<String, User> readUsersFromDisk() {
         Map<String, User> users = new HashMap<>();
-//        users.put("admin", new User(1, "admin", "java-course"));
-//        writeUsersToDisk(users);
         try (ObjectInputStream inputStream = new ObjectInputStream(
                 new FileInputStream(filepath))) {
             users = (HashMap<String, User>)inputStream.readObject();

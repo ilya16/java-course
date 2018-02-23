@@ -26,6 +26,9 @@ public class Connection implements Runnable {
     /** Registration module with all corresponding tools */
     private RegistrationModule registrationModule;
 
+    /** Closed status of the connection with the Client */
+    private boolean closed = false;
+
     /**
      * Constructor
      *
@@ -68,10 +71,19 @@ public class Connection implements Runnable {
         } catch (IOException e) {
             System.out.printf("%s\tConnection with the user %s was lost. Socket is closed\n",
                     Thread.currentThread().getName(), username);
+            closed = true;
         } catch (ClassNotFoundException e) {
-            System.out.printf("%s\tAn error occurred while object was read. Class was not found in the packages\n",
+            System.out.printf("%s\tAn error occurred while object was read. Class was not found ar runtime\n",
                     Thread.currentThread().getName());
         }
+    }
+
+    /**
+     * Returns the closed state of the socket.
+     * @return  true if connection is closed
+     */
+    boolean isClosed() {
+        return closed;
     }
 
     /**

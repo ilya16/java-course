@@ -1,6 +1,8 @@
 package hw2.client;
 
 import hw2.chat.Message;
+import hw2.utils.Status;
+import hw2.utils.StatusMonitor;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -55,7 +57,7 @@ public class MessageReceiver implements Receiver, Runnable {
         }
         while (true) {
             try {
-                if (currentStatus == Status.SETTINGS_ON) {
+                if (currentStatus == Status.ON) {
                     synchronized (monitor) {
                         currentStatus = monitor.getStatus();
                     }

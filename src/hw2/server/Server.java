@@ -1,5 +1,8 @@
 package hw2.server;
 
+import hw2.utils.Status;
+import hw2.utils.StatusMonitor;
+
 import java.io.*;
 import java.net.ServerSocket;
 
@@ -29,15 +32,26 @@ public class Server {
         ServerSocket serverSocket;
         try {
             serverSocket = new ServerSocket(portNumber);
+
+            /* setting timeout for blocking operations */
+            int timeout = 5000;     // 5 sec
+            serverSocket.setSoTimeout(timeout);
         } catch (IOException e) {
             System.out.printf("An error occurred while opening the server socket: \n\t%s\n" +
                             "Please, relaunch the Server app.", e.getMessage());
             return;
         }
 
+        /* status of the server */
+        StatusMonitor serverStatus = new StatusMonitor(Status.ON);
+
+        /* console on the server side */
+        Thread serverConsole = new Thread(new ServerConsole(serverStatus));
+        serverConsole.start();
+
         /* initialization of registration module with users and chat system */
         RegistrationModule registrationModule = new RegistrationModule("src/hw2/data/users.dat");
-        ChatSystem chatSystem = new ChatSystem(serverSocket, registrationModule);
+        ChatSystem chatSystem = new ChatSystem(serverSocket, registrationModule, serverStatus);
 
         /* one chat room */
         chatSystem.createChat();
