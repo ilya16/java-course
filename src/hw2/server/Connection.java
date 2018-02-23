@@ -3,6 +3,8 @@ package hw2.server;
 import hw2.chat.Chat;
 import hw2.chat.Message;
 import hw2.chat.User;
+import hw2.utils.Status;
+import hw2.utils.StatusMonitor;
 
 import java.io.*;
 import java.net.Socket;
@@ -15,7 +17,7 @@ import java.util.List;
  *
  * @author Ilya Borovik
  */
-public class Connection implements Runnable {
+class Connection implements Runnable {
 
     /** Socket connection object */
     private Socket socket;
@@ -26,6 +28,9 @@ public class Connection implements Runnable {
     /** Registration module with all corresponding tools */
     private RegistrationModule registrationModule;
 
+    /** Lock and Monitor used during the interaction with other Server modules */
+    private final StatusMonitor monitor;
+
     /** Closed status of the connection with the Client */
     private boolean closed = false;
 
@@ -35,10 +40,12 @@ public class Connection implements Runnable {
      * @param socket                Socket object
      * @param chats                 list of chats
      * @param registrationModule    Registration module object
+     * @param monitor               Server status monitor
      */
-    Connection(Socket socket, List<Chat> chats, RegistrationModule registrationModule) {
+    Connection(Socket socket, List<Chat> chats, RegistrationModule registrationModule, StatusMonitor monitor) {
         this.socket = socket;
         this.chats = chats;
+        this.monitor = monitor;
         this.registrationModule = registrationModule;
     }
 
@@ -51,13 +58,16 @@ public class Connection implements Runnable {
         try (ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
              ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream())) {
 
+            if (!isServerWorking()) return;
             /* authorizing user */
             User user = authorizeUser(inputStream, outputStream);
 
+            if (!isServerWorking()) return;
             /* sending information about the user to the Client */
             sendUserInfo(inputStream, outputStream, user);
             username = user.getUsername();
 
+            if (!isServerWorking()) return;
             /* getting the information about selected chat */
             Chat chat = getChat(inputStream, outputStream);
 
@@ -75,6 +85,14 @@ public class Connection implements Runnable {
         } catch (ClassNotFoundException e) {
             System.out.printf("%s\tAn error occurred while object was read. Class was not found ar runtime\n",
                     Thread.currentThread().getName());
+        } finally {
+            /* closing socket */
+            try {
+                socket.close();
+            } catch (IOException e1) {
+                System.out.printf("%s\tAn error occurred while closing the socket\n",
+                        Thread.currentThread().getName());
+            }
         }
     }
 
@@ -84,6 +102,18 @@ public class Connection implements Runnable {
      */
     boolean isClosed() {
         return closed;
+    }
+
+    /**
+     * Checks the status of the Server
+     * @return  true is Server is working
+     */
+    private boolean isServerWorking() {
+        Status serverStatus;
+        synchronized (monitor) {
+            serverStatus = monitor.getStatus();
+        }
+        return serverStatus == Status.ON;
     }
 
     /**
@@ -225,12 +255,12 @@ public class Connection implements Runnable {
                                    User user, Chat chat) throws IOException, ClassNotFoundException {
         Message message;
         while (true) {
+            if (!isServerWorking()) return;
+
             message = (Message)inputStream.readObject();
             message.setDate(new Date());
 
             if ("\\exit".equals(message.getText())) {
-                outputStream.writeObject(message);
-                outputStream.flush();
                 chat.removeOutputStream(outputStream);
                 chat.removeUser(user);
                 System.out.printf("%s\tUser %s has left the Chat %d\n",
@@ -239,6 +269,7 @@ public class Connection implements Runnable {
             } else if ("\\settings".equals(message.getText())) {
                 System.out.printf("%s\tUser %s has went to the Settings Module\n",
                         Thread.currentThread().getName(), user.getUsername());
+
                 updateUserInfo(inputStream, outputStream, user);
             } else {
                 System.out.printf("%s\tMessage from %s: %s\n",
@@ -249,6 +280,7 @@ public class Connection implements Runnable {
                 System.out.printf("%s\tSent to The Chat!\n",
                         Thread.currentThread().getName());
             }
+
         }
     }
 
@@ -301,7 +333,7 @@ public class Connection implements Runnable {
                 System.out.printf("%s\tUsername was successfully changed to \"%s\"\n",
                         Thread.currentThread().getName(), newUsername);
 
-            } else if ("\\password".equals(userAction)) {
+            } else {
                 System.out.printf("%s\tChange of the password of \"%s\" is happening\n",
                         Thread.currentThread().getName(), username);
 
@@ -316,6 +348,7 @@ public class Connection implements Runnable {
                         Thread.currentThread().getName(), username);
             }
         }
+
         return true;
     }
 }

@@ -12,7 +12,7 @@ import java.util.Map;
  *
  * @author Ilya Borovik
  */
-public class RegistrationModule {
+class RegistrationModule {
 
     /** Collection with users */
     private Map<String, User> users;

@@ -5,5 +5,6 @@ package hw2.utils;
  */
 public enum Status {
     ON,
-    OFF
+    OFF,
+    SETTINGS
 }

@@ -1,5 +1,7 @@
 package hw2.chat;
 
+import java.io.IOException;
+import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -11,20 +13,25 @@ import java.util.Date;
  */
 public class Message implements Serializable {
 
-    /** Message variables */
+    /**
+     * Message variables
+     */
     private String text;
     private int chatID;
     private User sender;
     private Date date;
 
-    /** DateFormat instance */
+    /**
+     * DateFormat instance
+     */
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
 
     /**
      * Constructor
-     * @param text      message text
-     * @param chatID    chat id of the chat that is related to this message
-     * @param sender    User object of the sender
+     *
+     * @param text   message text
+     * @param chatID chat id of the chat that is related to this message
+     * @param sender User object of the sender
      */
     public Message(String text, int chatID, User sender) {
         this.text = text;
@@ -33,7 +40,9 @@ public class Message implements Serializable {
         this.date = new Date();
     }
 
-    /** Getters and Setters */
+    /**
+     * Getters and Setters
+     */
     public String getText() {
         return text;
     }
@@ -57,11 +66,28 @@ public class Message implements Serializable {
     /**
      * Returns a pretty String representation of the Message
      *
-     * @return  String representation
+     * @return String representation
      */
     @Override
     public String toString() {
         return String.format("%s\t%s:\t%s",
                 dateFormat.format(date), sender.getUsername(), text);
     }
+//
+//    private void writeObject(java.io.ObjectOutputStream out)
+//            throws IOException {
+//        out.writeUTF(text);
+//        out.writeInt(chatID);
+//        out.writeObject(sender);
+//        out.writeObject(date);
+//    }
+//
+//    private void readObject(java.io.ObjectInputStream in)
+//            throws IOException, ClassNotFoundException {
+//        text = in.readUTF();
+//        chatID = in.readInt();
+//        sender = (User) in.readObject();
+//        date = (Date) in.readObject();
+//    }
+//
 }

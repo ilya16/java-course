@@ -7,6 +7,7 @@ import hw2.utils.StatusMonitor;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.net.SocketTimeoutException;
 
 /**
  * Receives messages through the socket.
@@ -50,42 +51,37 @@ public class MessageReceiver implements Receiver, Runnable {
     @Override
     public void run() {
         Message message;
+        Status chatStatus;
 
-        Status currentStatus;
-        synchronized (monitor) {
-            currentStatus = monitor.getStatus();
-        }
         while (true) {
-            try {
-                if (currentStatus == Status.ON) {
-                    synchronized (monitor) {
-                        currentStatus = monitor.getStatus();
-                    }
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                    }
-                } else {
+            synchronized (monitor) {
+                chatStatus = monitor.getStatus();
+            }
+            if (chatStatus == Status.SETTINGS) {
+                try { Thread.sleep(100); }
+                catch (InterruptedException e) {}
+            } else if (chatStatus == Status.ON) {
+                try {
                     message = (Message) receive(inputStream);
 
-                    if ("\\exit".equals(message.getText())) {
-                        return;
-                    }
-
                     System.out.println(message);
+                } catch (EOFException e) {
+                    // Connection with the Server is lost, closing the app
+                    // (The better solution is to send signals until connection is present)
+                    synchronized (monitor) {
+                        monitor.setStatus(Status.OFF);
+                    }
+                    return;
+                }  catch (SocketTimeoutException e) {
+                    // No new messages received during the last 100 milliseconds
+                } catch (IOException e) {
+                     System.out.println("An error occurred while receiving the message.");
+                } catch (ClassNotFoundException e) {
+                    System.out.println("An error occurred. Class Message is not found. Message was not received.");
                 }
-
-            } catch (EOFException e) {
-                System.out.println("Connection with the Server is lost.");
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e1) {
-                    System.out.println("An error occurred");
-                }
-            } catch (IOException e) {
-                System.out.println("An error occurred while receiving the message.");
-            } catch (ClassNotFoundException e) {
-                System.out.println("An error occurred. Class Message is not found. Message was not received.");
+            } else {
+                // Status.OFF
+                return;
             }
         }
     }

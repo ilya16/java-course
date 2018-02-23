@@ -62,9 +62,7 @@ public class Server {
 
         try {
             chatSystemThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        } catch (InterruptedException e) {}
 
         System.out.println("Server has stopped its execution.");
     }

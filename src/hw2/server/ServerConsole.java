@@ -10,7 +10,7 @@ import java.util.Scanner;
  *
  * @author Ilya Borovik
  */
-public class ServerConsole implements Runnable {
+class ServerConsole implements Runnable {
 
     /** Lock and Monitor used during the interaction with other Server modules */
     private final StatusMonitor monitor;

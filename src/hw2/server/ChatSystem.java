@@ -18,13 +18,13 @@ import java.util.stream.Collectors;
  *
  * @author Ilya Borovik
  */
-public class ChatSystem implements Runnable {
+class ChatSystem implements Runnable {
 
     /** Server Socket object */
     private ServerSocket serverSocket;
 
     /** List of connection with users (clients) */
-    private List<Connection> connections;
+    private List<Thread> connections;
 
     /** List of all chats in the Chat System */
     private List<Chat> chats;
@@ -69,6 +69,7 @@ public class ChatSystem implements Runnable {
         System.out.println("Chat system was successfully started");
 
         Status serverStatus;
+        int connectionNumber = 1;
 
         synchronized (monitor) {
             serverStatus = monitor.getStatus();
@@ -78,11 +79,11 @@ public class ChatSystem implements Runnable {
             try {
                 Socket socket = serverSocket.accept();
                 System.out.println("New Connection Accepted!");
-                Connection connection = new Connection(socket, chats, registrationModule);
-                connections.add(connection);
+                Connection connection = new Connection(socket, chats, registrationModule, monitor);
 
                 Thread connectionThread = new Thread(connection);
-                connectionThread.setName("Connection-" + connections.size());
+                connectionThread.setName("Connection-" + connectionNumber++);
+                connections.add(connectionThread);
                 connectionThread.start();
             } catch (SocketTimeoutException e) {
                 System.out.println("No new connections accepted during the last 5 seconds");
@@ -92,7 +93,12 @@ public class ChatSystem implements Runnable {
             synchronized (monitor) {
                 serverStatus = monitor.getStatus();
             }
-            connections = connections.stream().filter(x -> !x.isClosed()).collect(Collectors.toList());
+        }
+
+        for (Thread conn: connections) {
+            try {
+                conn.join();
+            } catch (InterruptedException e) {}
         }
 
         System.out.println("Chat System has finished its execution");

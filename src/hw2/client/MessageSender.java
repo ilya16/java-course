@@ -25,9 +25,6 @@ public class MessageSender implements Sender, Runnable {
     /** Sender of the messages */
     private User user;
 
-    /** Settings object */
-    private Settings settings;
-
     /** Lock used during the interaction with Settings module */
     private final StatusMonitor monitor;
 
@@ -68,38 +65,43 @@ public class MessageSender implements Sender, Runnable {
         Scanner scanner = new Scanner(System.in);
         String messageText = "";
         Message message;
+        Status chatStatus;
 
         while (!"\\exit".equals(messageText)) {
             messageText = scanner.nextLine();
 
-            message = new Message(messageText, chatID, user);
+            if (!"".equals(messageText)) {
+                message = new Message(messageText, chatID, user);
 
-            try {
-                send(message, outputStream);
-                System.out.println(message);
+                try {
+                    send(message, outputStream);
+                    System.out.println(message);
 
-                if ("\\settings".equals(messageText)) {
-                    synchronized (monitor) {
-                        monitor.setStatus(Status.ON);
-                        Thread settingThread = new Thread(settings);
-                        settingThread.start();
-                        try {
-                            settingThread.join();
-                        } catch (InterruptedException e) {
-                            System.out.println("An error occurred while getting to the Settings Module");
+                    if ("\\settings".equals(messageText)) {
+                        synchronized (monitor) {
+                            monitor.setStatus(Status.SETTINGS);
                         }
-                        monitor.setStatus(Status.OFF);
+
+                        do {
+                            try { Thread.sleep(100); }
+                            catch (InterruptedException e) {}
+                            synchronized (monitor) {
+                                chatStatus = monitor.getStatus();
+                            }
+                        } while (chatStatus == Status.SETTINGS);
+
                         System.out.printf("======== Chat %d ========\n", chatID);
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    System.out.println("An error occurred while sending your message. " +
+                            "Please, try to send it again.");
                 }
-            } catch (IOException e) {
-                System.out.println("An error occurred while sending your message. " +
-                        "Please, try to send it again.");
             }
         }
-    }
 
-    public void setSettings(Settings settings) {
-        this.settings = settings;
+        synchronized (monitor) {
+            monitor.setStatus(Status.OFF);
+        }
     }
 }
